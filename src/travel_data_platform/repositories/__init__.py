@@ -3,9 +3,11 @@ from travel_data_platform.repositories.raw_flight_offer_repository import RawFli
 from travel_data_platform.repositories.normalized_flight_offer_repository import (
     NormalizedFlightOfferRepository,
 )
+from travel_data_platform.repositories.flight_watch_repository import FlightWatchRepository
 
 __all__ = [
     "FetchRunRepository",
     "RawFlightOfferRepository",
     "NormalizedFlightOfferRepository",
+    "FlightWatchRepository",
 ]

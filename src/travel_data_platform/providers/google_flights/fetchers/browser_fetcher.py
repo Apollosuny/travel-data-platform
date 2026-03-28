@@ -16,49 +16,68 @@ from travel_data_platform.providers.google_flights.fetchers.base import GoogleFl
 class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
     BASE_URL = "https://www.google.com/travel/flights"
 
+    def __init__(self, browser: Browser | None = None) -> None:
+        self.browser = browser
+
     async def fetch_raw(self, query: FlightQuery) -> list[dict]:
-        browser: Browser | None = None
+        if self.browser is not None:
+            return await self._fetch_with_browser(self.browser, query)
+
+        playwright = None
+        browser = None
+        try:
+            playwright = await async_playwright().start()
+            browser = await playwright.chromium.launch(
+                headless=True,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                ],
+            )
+            return await self._fetch_with_browser(browser, query)
+        except Exception as exc:
+            raise ProviderFetchError("Failed to fetch Google Flights raw data") from exc
+        finally:
+            if browser is not None:
+                with suppress(Exception):
+                    await browser.close()
+            if playwright is not None:
+                with suppress(Exception):
+                    await playwright.stop()
+
+    async def _fetch_with_browser(self, browser: Browser, query: FlightQuery) -> list[dict]:
         context: BrowserContext | None = None
         page: Page | None = None
 
         try:
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(
-                    headless=True,
-                    args=[
-                        "--disable-blink-features=AutomationControlled",
-                        "--no-sandbox",
-                    ],
-                )
-                context = await browser.new_context(
-                    locale="en-US",
-                    viewport={"width": 1440, "height": 900},
-                    user_agent=(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                        "AppleWebKit/537.36 (KHTML, like Gecko) "
-                        "Chrome/122.0.0.0 Safari/537.36"
-                    ),
-                )
-                page = await context.new_page()
+            context = await browser.new_context(
+                locale="en-US",
+                viewport={"width": 1440, "height": 900},
+                user_agent=(
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/122.0.0.0 Safari/537.36"
+                ),
+            )
+            page = await context.new_page()
 
-                url = self._build_search_url(query)
-                await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-                await self._wait_for_results(page)
+            url = self._build_search_url(query)
+            await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            await self._wait_for_results(page)
 
-                html = await page.content()
-                body_text = await page.locator("body").inner_text()
+            html = await page.content()
+            body_text = await page.locator("body").inner_text()
 
-                write_debug_artifact("page", html, "html")
-                write_debug_artifact("body", body_text, "txt")
+            write_debug_artifact("page", html, "html")
+            write_debug_artifact("body", body_text, "txt")
 
-                raw_offers = await self._extract_raw_offers(page)
-                raw_offers = self._dedupe_offers(raw_offers)
-                write_debug_json("raw_offers", raw_offers)
-                return raw_offers
+            raw_offers = await self._extract_raw_offers(page)
+            raw_offers = self._dedupe_offers(raw_offers)
+            write_debug_json("offers", raw_offers)
 
+            return raw_offers
         except Exception as exc:
             raise ProviderFetchError("Failed to fetch Google Flights raw data") from exc
-
         finally:
             if page is not None:
                 with suppress(Exception):
@@ -66,9 +85,6 @@ class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
             if context is not None:
                 with suppress(Exception):
                     await context.close()
-            if browser is not None:
-                with suppress(Exception):
-                    await browser.close()
 
     def _build_search_url(self, query: FlightQuery) -> str:
         search_text = " ".join(
@@ -76,8 +92,8 @@ class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
             for part in [
                 query.origin,
                 query.destination,
-                query.departure_date,
-                query.return_date,
+                query.departure_date.isoformat(),
+                query.return_date.isoformat() if query.return_date else None,
             ]
             if part
         )

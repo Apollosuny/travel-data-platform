@@ -13,8 +13,8 @@ from travel_data_platform.repositories.normalized_flight_offer_repository import
 
 
 class IngestionService:
-    def __init__(self) -> None:
-        self.provider = GoogleFlightsProvider()
+    def __init__(self, provider: GoogleFlightsProvider) -> None:
+        self.provider = provider or GoogleFlightsProvider()
         self.source = "google_flights"
 
     async def ingest_google_flights(self, query: FlightQuery) -> IngestionResult:

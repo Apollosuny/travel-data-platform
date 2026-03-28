@@ -23,7 +23,7 @@ class FetchRunRepository:
             departure_date=query.departure_date,
             return_date=query.return_date,
             adults=query.adults,
-            query_payload=query.model_dump(),
+            query_payload=query.model_dump(mode="json"),
             started_at=now,
             completed_at=None,
             duration_ms=None,
