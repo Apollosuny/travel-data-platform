@@ -42,6 +42,10 @@ class IngestionService:
             db.commit()
 
             offers = await self.provider.search(query)
+            warnings = self._build_warnings(
+                raw_offers=raw_offers,
+                normalized_count=len(offers),
+            )
 
             write_debug_json(
                 f"{fetch_run.id}_normalized_offers",
@@ -70,6 +74,7 @@ class IngestionService:
                 raw_offer_count=len(raw_offers),
                 normalized_offer_count=len(offers),
                 offers=offers,
+                warnings=warnings
             )
 
         except Exception as exc:
@@ -88,3 +93,21 @@ class IngestionService:
 
         finally:
             db.close()
+    
+    def _build_warnings(
+        self,
+        raw_offers: list[dict],
+        normalized_count: int,
+    ) -> list[str]:
+        warnings: list[str] = []
+
+        if len(raw_offers) == 0:
+            warnings.append("raw_offer_count_is_zero")
+
+        if normalized_count == 0:
+            warnings.append("normalized_offer_count_is_zero")
+
+        if len(raw_offers) > 0 and normalized_count == 0:
+            warnings.append("raw_exists_but_normalized_empty")
+
+        return warnings

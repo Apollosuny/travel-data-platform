@@ -29,3 +29,23 @@ class IngestionResult(BaseModel):
   raw_offer_count: int
   normalized_offer_count: int
   offers: list[FlightOffer]
+  warnings: list[str] = []
+
+class BatchWatchResult(BaseModel):
+    watch_id: str
+    route: str
+    success: bool
+    fetch_run_id: str | None = None
+    raw_offer_count: int = 0
+    normalized_offer_count: int = 0
+    error_message: str | None = None
+    warnings: list[str] = []
+
+
+class BatchJobSummary(BaseModel):
+    total_watches: int
+    success_count: int
+    failed_count: int
+    warning_count: int
+    duration_ms: int
+    results: list[BatchWatchResult]
