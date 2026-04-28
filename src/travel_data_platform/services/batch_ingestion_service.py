@@ -37,7 +37,11 @@ class BatchIngestionService:
                 results=[],
             )
 
-        self.logger.info("batch_started total_watches=%s concurrency=%s", len(watches), self.concurrency)
+        self.logger.info(
+            "batch_started total_watches=%s concurrency=%s",
+            len(watches),
+            self.concurrency,
+        )
 
         async with google_flights_browser() as browser:
             semaphore = asyncio.Semaphore(self.concurrency)
@@ -47,7 +51,9 @@ class BatchIngestionService:
                 route = f"{query.origin}-{query.destination}"
 
                 async with semaphore:
-                    self.logger.info("watch_started watch_id=%s route=%s", watch.id, route)
+                    self.logger.info(
+                        "watch_started watch_id=%s route=%s", watch.id, route
+                    )
 
                     try:
                         provider = self._build_provider(browser)
@@ -55,13 +61,14 @@ class BatchIngestionService:
                         result = await service.ingest_google_flights(query)
 
                         self.logger.info(
-                            "watch_finished watch_id=%s route=%s fetch_run_id=%s raw=%s normalized=%s warnings=%s",
+                            "watch_finished watch_id=%s route=%s fetch_run_id=%s raw=%s normalized=%s warnings=%s alerts=%s",
                             watch.id,
                             route,
                             result.fetch_run_id,
                             result.raw_offer_count,
                             result.normalized_offer_count,
                             len(result.warnings),
+                            result.alert_count,
                         )
 
                         return BatchWatchResult(
