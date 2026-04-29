@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 import pytest
 
 from travel_data_platform.domain.flight import FlightQuery
@@ -13,7 +15,7 @@ async def test_google_browser_fetcher_live():
     query = FlightQuery(
         origin="HAN",
         destination="BKK",
-        departure_date="2026-04-20",
+        departure_date=date.today() + timedelta(days=30),
     )
 
     raw_offers = await fetcher.fetch_raw(query)

@@ -8,6 +8,7 @@ from travel_data_platform.domain.flight import FlightQuery
 from travel_data_platform.exceptions import ProviderFetchError
 from travel_data_platform.providers.google_flights.debug.artifacts import (
   write_debug_artifact,
+  write_debug_bytes,
   write_debug_json
 )
 from travel_data_platform.providers.google_flights.fetchers.base import GoogleFlightsRawFetcher
@@ -61,9 +62,7 @@ class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
             )
             page = await context.new_page()
 
-            url = self._build_search_url(query)
-            await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            await self._wait_for_results(page)
+            await self._navigate_to_results(page, query)
 
             html = await page.content()
             body_text = await page.locator("body").inner_text()
@@ -77,6 +76,8 @@ class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
 
             return raw_offers
         except Exception as exc:
+            if page is not None:
+                await self._dump_failure_artifacts(page)
             raise ProviderFetchError("Failed to fetch Google Flights raw data") from exc
         finally:
             if page is not None:
@@ -85,6 +86,17 @@ class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
             if context is not None:
                 with suppress(Exception):
                     await context.close()
+
+    async def _dump_failure_artifacts(self, page: Page) -> None:
+        with suppress(Exception):
+            html = await page.content()
+            write_debug_artifact("page_failure", html, "html")
+        with suppress(Exception):
+            body_text = await page.locator("body").inner_text()
+            write_debug_artifact("body_failure", body_text, "txt")
+        with suppress(Exception):
+            screenshot = await page.screenshot(full_page=True)
+            write_debug_bytes("screenshot_failure", screenshot, "png")
 
     def _build_search_url(self, query: FlightQuery) -> str:
         search_text = " ".join(
@@ -98,6 +110,130 @@ class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
             if part
         )
         return f"{self.BASE_URL}?q={quote_plus(search_text)}"
+
+    async def _navigate_to_results(self, page: Page, query: FlightQuery) -> None:
+        url = self._build_search_url(query)
+        await page.goto(url, wait_until="load", timeout=60000)
+        with suppress(Exception):
+            await page.wait_for_load_state("networkidle", timeout=15000)
+
+        try:
+            await self._wait_for_results(page)
+            return
+        except Exception:
+            if not await self._looks_like_homepage(page):
+                raise
+
+        await self._submit_search_form(page, query)
+        await self._wait_for_results(page)
+
+    async def _looks_like_homepage(self, page: Page) -> bool:
+        with suppress(Exception):
+            return await page.locator("text=Find cheap flights").first.is_visible()
+        return False
+
+    async def _submit_search_form(self, page: Page, query: FlightQuery) -> None:
+        if query.return_date is None:
+            await self._select_one_way(page)
+
+        await self._fill_location_input(page, "Where from?", query.origin)
+        await self._fill_location_input(page, "Where to?", query.destination)
+        await self._fill_date_input(page, "Departure", query.departure_date)
+        if query.return_date is not None:
+            await self._fill_date_input(page, "Return", query.return_date)
+
+        await self._close_date_picker(page)
+        await self._click_search(page)
+
+        with suppress(Exception):
+            await page.wait_for_load_state("networkidle", timeout=15000)
+
+    async def _click_search(self, page: Page) -> None:
+        candidates = [
+            page.get_by_role("button", name="Search", exact=True).first,
+            page.locator("div[role='button'][aria-label='Search']").first,
+            page.locator("button[aria-label='Search']").first,
+        ]
+        last_error: Exception | None = None
+        for candidate in candidates:
+            try:
+                if not await candidate.count():
+                    continue
+                await candidate.scroll_into_view_if_needed(timeout=3000)
+                await candidate.click(timeout=5000)
+                return
+            except Exception as exc:
+                last_error = exc
+                continue
+
+        for candidate in candidates:
+            try:
+                if not await candidate.count():
+                    continue
+                await candidate.click(timeout=5000, force=True)
+                return
+            except Exception as exc:
+                last_error = exc
+                continue
+
+        if last_error is not None:
+            raise last_error
+
+    async def _close_date_picker(self, page: Page) -> None:
+        dialog = page.locator("div[role='dialog'][aria-modal='true']").first
+        if not await dialog.count() or not await dialog.is_visible():
+            return
+
+        done_button = dialog.locator("[role='button']", has_text="Done").first
+        with suppress(Exception):
+            if await done_button.count():
+                await done_button.click(timeout=5000)
+
+        with suppress(Exception):
+            await dialog.wait_for(state="hidden", timeout=5000)
+
+        if await dialog.is_visible():
+            with suppress(Exception):
+                await page.keyboard.press("Escape")
+                await dialog.wait_for(state="hidden", timeout=5000)
+
+    async def _select_one_way(self, page: Page) -> None:
+        with suppress(Exception):
+            await page.get_by_label("Change ticket type.").first.click(timeout=5000)
+            await page.get_by_role("option", name="One way").first.click(timeout=5000)
+
+    async def _fill_location_input(self, page: Page, label: str, value: str) -> None:
+        field = page.get_by_role("combobox", name=label).first
+        await field.click(timeout=10000)
+        await field.fill("")
+        await field.type(value, delay=50)
+        with suppress(Exception):
+            await page.wait_for_selector("li[role='option']", timeout=8000)
+        await page.keyboard.press("Enter")
+
+    async def _fill_date_input(self, page: Page, label: str, value) -> None:
+        dialog_field = page.locator(
+            f"div[role='dialog'][aria-modal='true'] input[aria-label='{label}']"
+        ).first
+        if await dialog_field.count() and await dialog_field.is_visible():
+            field = dialog_field
+        else:
+            field = await self._first_visible(page, f"input[aria-label='{label}']")
+
+        await field.click(timeout=10000)
+        await page.keyboard.press("Control+A")
+        await page.keyboard.press("Delete")
+        await page.keyboard.type(value.strftime("%m/%d/%Y"), delay=50)
+        await page.keyboard.press("Enter")
+
+    async def _first_visible(self, page: Page, selector: str) -> Locator:
+        elements = page.locator(selector)
+        count = await elements.count()
+        for i in range(count):
+            element = elements.nth(i)
+            if await element.is_visible():
+                return element
+        return page.locator(selector).first
 
     async def _wait_for_results(self, page: Page) -> None:
         await page.wait_for_selector("ul.Rk10dc li.pIav2d", timeout=30000)
