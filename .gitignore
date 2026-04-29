@@ -32,3 +32,5 @@ debug/
 
 # Alembic
 alembic/versions/*.pyc
+
+/.claude
