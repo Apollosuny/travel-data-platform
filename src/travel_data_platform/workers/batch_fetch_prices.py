@@ -26,7 +26,7 @@ async def main() -> None:
         logger.info("batch_completed total_watches=0 success=0 failed=0")
         return
 
-    service = BatchIngestionService(concurrency=2)
+    service = BatchIngestionService(concurrency=1)
     summary = await service.ingest_watches(watches)
 
     successful_watch_ids = {

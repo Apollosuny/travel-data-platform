@@ -1,0 +1,41 @@
+name: batch-fetch-prices
+
+on:
+    # Schedule disabled for now — uncomment when ready to run automatically.
+    # GitHub Actions cron is best-effort: expect 5–15 min delay under load.
+    # schedule:
+    #     - cron: "0 */6 * * *"  # every 6 hours, aligned with check_frequency_minutes=360
+    workflow_dispatch:
+
+concurrency:
+    group: batch-fetch-prices
+    cancel-in-progress: false
+
+jobs:
+    fetch:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+
+        env:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
+            APP_ENV: production
+            LOG_LEVEL: INFO
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup uv
+              uses: astral-sh/setup-uv@v5
+
+            - name: Setup Python
+              run: uv python install 3.12
+
+            - name: Sync dependencies
+              run: uv sync
+
+            - name: Install Playwright Chromium
+              run: uv run playwright install --with-deps chromium
+
+            - name: Run batch fetch
+              run: uv run python -m travel_data_platform.workers.batch_fetch_prices
