@@ -23,7 +23,8 @@ htmlcov/
 
 .env
 
-debug/
+/debug/
+!src/**/debug/
 
 # OS / IDE
 .DS_Store
