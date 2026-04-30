@@ -5,8 +5,8 @@ import time
 from travel_data_platform.database.models.flight_watch import FlightWatch
 from travel_data_platform.domain.ingestion import BatchJobSummary, BatchWatchResult
 from travel_data_platform.providers.google_flights.client import GoogleFlightsProvider
-from travel_data_platform.providers.google_flights.fetchers.tfs_fetcher import (
-    GoogleFlightsTfsFetcher,
+from travel_data_platform.providers.google_flights.fetchers.playwright_fetcher import (
+    GoogleFlightsPlaywrightFetcher,
 )
 from travel_data_platform.services.ingestion_service import IngestionService
 from travel_data_platform.services.watch_query_service import WatchQueryService
@@ -45,9 +45,7 @@ class BatchIngestionService:
             route = f"{query.origin}-{query.destination}"
 
             async with semaphore:
-                self.logger.info(
-                    "watch_started watch_id=%s route=%s", watch.id, route
-                )
+                self.logger.info("watch_started watch_id=%s route=%s", watch.id, route)
 
                 try:
                     service = IngestionService(provider=provider)
@@ -117,4 +115,4 @@ class BatchIngestionService:
         return summary
 
     def _build_provider(self) -> GoogleFlightsProvider:
-        return GoogleFlightsProvider(fetcher=GoogleFlightsTfsFetcher())
+        return GoogleFlightsProvider(fetcher=GoogleFlightsPlaywrightFetcher())
