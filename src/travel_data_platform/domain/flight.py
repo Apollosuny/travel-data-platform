@@ -1,5 +1,7 @@
 from datetime import date
+
 from pydantic import BaseModel
+
 
 class FlightQuery(BaseModel):
   origin: str

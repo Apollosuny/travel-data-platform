@@ -32,7 +32,9 @@ class FlightWatchRepository:
 
         return due_watches
 
-    def update_last_checked_at(self, watch_id: uuid.UUID, checked_at: datetime | None = None) -> None:
+    def update_last_checked_at(
+        self, watch_id: uuid.UUID, checked_at: datetime | None = None
+    ) -> None:
         checked_at = checked_at or datetime.now(UTC)
 
         watch = self.db.get(FlightWatch, watch_id)

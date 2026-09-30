@@ -5,10 +5,10 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from travel_data_platform.database.models.fetch_run import FetchRun
+from travel_data_platform.database.models.flight_watch import FlightWatch
 from travel_data_platform.database.models.normalized_flight_offer import (
     NormalizedFlightOffer,
 )
-from travel_data_platform.database.models.flight_watch import FlightWatch
 
 
 class FlightPriceMonitoringRepository:

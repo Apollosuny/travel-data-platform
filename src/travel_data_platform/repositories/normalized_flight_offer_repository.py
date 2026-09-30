@@ -1,5 +1,5 @@
 import uuid
-from datetime import time
+
 from sqlalchemy.orm import Session
 
 from travel_data_platform.database.models.normalized_flight_offer import NormalizedFlightOffer

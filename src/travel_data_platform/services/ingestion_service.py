@@ -1,19 +1,14 @@
 from sqlalchemy.orm import Session
 
+from travel_data_platform.database.models.fetch_run import FetchRun
 from travel_data_platform.database.session import SessionLocal
-from travel_data_platform.domain.ingestion import IngestionResult
 from travel_data_platform.domain.flight import FlightQuery
+from travel_data_platform.domain.ingestion import IngestionResult
 from travel_data_platform.providers.google_flights.client import GoogleFlightsProvider
 from travel_data_platform.providers.google_flights.debug.artifacts import (
     write_debug_json,
 )
 from travel_data_platform.repositories.fetch_run_repository import FetchRunRepository
-from travel_data_platform.repositories.raw_flight_offer_repository import (
-    RawFlightOfferRepository,
-)
-from travel_data_platform.repositories.normalized_flight_offer_repository import (
-    NormalizedFlightOfferRepository,
-)
 from travel_data_platform.repositories.flight_alert_event_repository import (
     FlightAlertEventRepository,
 )
@@ -22,6 +17,12 @@ from travel_data_platform.repositories.flight_price_monitoring_repository import
 )
 from travel_data_platform.repositories.flight_watch_repository import (
     FlightWatchRepository,
+)
+from travel_data_platform.repositories.normalized_flight_offer_repository import (
+    NormalizedFlightOfferRepository,
+)
+from travel_data_platform.repositories.raw_flight_offer_repository import (
+    RawFlightOfferRepository,
 )
 from travel_data_platform.services.alert_rule_evaluator import AlertRuleEvaluator
 
@@ -33,6 +34,7 @@ class IngestionService:
 
     async def ingest_google_flights(self, query: FlightQuery) -> IngestionResult:
         db: Session = SessionLocal()
+        fetch_run: FetchRun | None = None
 
         try:
             fetch_run_repo = FetchRunRepository(db)
@@ -102,7 +104,6 @@ class IngestionService:
             db.rollback()
 
             try:
-                fetch_run = locals().get("fetch_run")
                 if fetch_run is not None:
                     fetch_run_repo = FetchRunRepository(db)
                     fetch_run_repo.mark_failed(

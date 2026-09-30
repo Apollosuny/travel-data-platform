@@ -1,6 +1,7 @@
-from pydantic import BaseModel
 from datetime import UTC, datetime
 from uuid import uuid4
+
+from pydantic import BaseModel
 
 from travel_data_platform.domain.flight import FlightOffer, FlightQuery
 

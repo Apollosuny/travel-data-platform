@@ -1,4 +1,5 @@
 import uuid
+
 from sqlalchemy.orm import Session
 
 from travel_data_platform.database.models.raw_flight_offer import RawFlightOffer

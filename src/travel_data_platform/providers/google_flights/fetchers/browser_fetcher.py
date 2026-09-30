@@ -7,9 +7,9 @@ from playwright.async_api import Browser, BrowserContext, Locator, Page, async_p
 from travel_data_platform.domain.flight import FlightQuery
 from travel_data_platform.exceptions import ProviderFetchError
 from travel_data_platform.providers.google_flights.debug.artifacts import (
-  write_debug_artifact,
-  write_debug_bytes,
-  write_debug_json
+    write_debug_artifact,
+    write_debug_bytes,
+    write_debug_json,
 )
 from travel_data_platform.providers.google_flights.fetchers.base import GoogleFlightsRawFetcher
 
@@ -273,7 +273,9 @@ class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
 
     async def _extract_offer_from_card(self, card: Locator, source_url: str) -> dict | None:
         aria_label = await self._safe_get_attr(card.locator(".JMc5Xc").first, "aria-label")
-        price_aria = await self._safe_get_attr(card.locator(".U3gSDe .YMlIz [aria-label]").first, "aria-label")
+        price_aria = await self._safe_get_attr(
+            card.locator(".U3gSDe .YMlIz [aria-label]").first, "aria-label"
+        )
         airline_text = await self._safe_inner_text(card.locator(".sSHqwe.tPgKwe.ogfYpf").first)
 
         price_info = self._parse_price(price_aria or aria_label or "")

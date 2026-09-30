@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 from datetime import UTC, datetime
 
 from travel_data_platform.config import settings
@@ -32,7 +31,7 @@ async def main() -> int:
     try:
         watch_repo = FlightWatchRepository(db)
 
-        for watch, result in zip(watches, summary.results):
+        for watch, result in zip(watches, summary.results, strict=True):
             if result.success:
                 watch_repo.update_last_checked_at(watch.id, datetime.now(UTC))
 
@@ -43,7 +42,8 @@ async def main() -> int:
     for result in summary.results:
         if result.success:
             logger.info(
-                "watch_result watch_id=%s route=%s success=true fetch_run_id=%s raw=%s normalized=%s warnings=%s",
+                "watch_result watch_id=%s route=%s success=true fetch_run_id=%s "
+                "raw=%s normalized=%s warnings=%s",
                 result.watch_id,
                 result.route,
                 result.fetch_run_id,
