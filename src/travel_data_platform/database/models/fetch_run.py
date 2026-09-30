@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from travel_data_platform.database.base import Base
 
+
 class FetchRun(Base):
   __tablename__ = "fetch_runs"
   __table_args__ = { "schema": "ingestion" }

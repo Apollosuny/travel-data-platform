@@ -1,6 +1,6 @@
+import json
 from datetime import UTC, datetime
 from pathlib import Path
-import json
 
 
 def write_debug_artifact(name: str, content: str, suffix: str = "txt") -> str:

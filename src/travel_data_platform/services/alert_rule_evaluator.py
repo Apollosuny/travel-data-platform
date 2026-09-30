@@ -47,7 +47,10 @@ class AlertRuleEvaluator:
             currency=currency,
             baseline_price=None,
             target_price=target_price,
-            message=f"Current price {current_price} {currency} is below target price {target_price} {currency}.",
+            message=(
+                f"Current price {current_price} {currency} "
+                f"is below target price {target_price} {currency}."
+            ),
         )
 
     def _evaluate_new_low_7d(
@@ -68,5 +71,8 @@ class AlertRuleEvaluator:
             currency=currency,
             baseline_price=min_price_7d,
             target_price=None,
-            message=f"Current price {current_price} {currency} is the lowest price in the last 7 days.",
+            message=(
+                f"Current price {current_price} {currency} "
+                "is the lowest price in the last 7 days."
+            ),
         )

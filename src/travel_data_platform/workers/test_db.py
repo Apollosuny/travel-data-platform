@@ -1,6 +1,6 @@
 from travel_data_platform.database.session import SessionLocal
-from travel_data_platform.repositories.fetch_run_repository import FetchRunRepository
 from travel_data_platform.domain.flight import FlightQuery
+from travel_data_platform.repositories.fetch_run_repository import FetchRunRepository
 
 
 def main() -> None:

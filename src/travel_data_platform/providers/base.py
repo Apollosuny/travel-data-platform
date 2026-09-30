@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 from travel_data_platform.domain.flight import FlightOffer, FlightQuery
+
 
 class FlightProvider(ABC): 
   @abstractmethod
