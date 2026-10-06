@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck test check migrate upgrade
+.PHONY: install lint format typecheck test check migrate upgrade github-env-init github-env-push github-env-dry-run
 
 install:
 	uv sync
@@ -26,3 +26,14 @@ upgrade:
 
 migrate:
 	uv run alembic revision --autogenerate -m "$(m)"
+
+STAGE ?= prod
+
+github-env-init:
+	uv run python -m travel_data_platform.deployment.setup_github_env --init $(STAGE)
+
+github-env-dry-run:
+	uv run python -m travel_data_platform.deployment.setup_github_env --stage $(STAGE) --dry-run
+
+github-env-push:
+	uv run python -m travel_data_platform.deployment.setup_github_env --stage $(STAGE)

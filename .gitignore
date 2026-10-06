@@ -22,6 +22,8 @@ wheels/
 htmlcov/
 
 .env
+# GitHub Environment values (credentials) — see docs/deployment/setup.md
+.env.github*
 
 /debug/
 !src/**/debug/

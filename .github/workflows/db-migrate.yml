@@ -1,0 +1,62 @@
+name: db-migrate
+
+# Manual only: applies Alembic migrations to the `prod` environment database.
+# Run this BEFORE merging code that depends on a new migration, and review the
+# migration files first (see CLAUDE.md "Migration safety").
+on:
+    workflow_dispatch:
+
+concurrency:
+    # Never migrate while a batch run is reading/writing the same database.
+    group: batch-fetch-prices
+    cancel-in-progress: false
+
+jobs:
+    migrate:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        environment: prod
+
+        env:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
+            APP_ENV: ${{ vars.APP_ENV || 'production' }}
+            PYTHONUNBUFFERED: "1"
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup uv
+              uses: astral-sh/setup-uv@v5
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: "uv.lock"
+
+            - name: Setup Python
+              run: uv python install 3.12
+
+            - name: Sync dependencies
+              run: uv sync --frozen
+
+            - name: Ensure schemas exist
+              # The first migration creates tables in `ingestion` and `app` but not the
+              # schemas themselves, so a fresh database (e.g. a new Neon project) needs them.
+              run: |
+                  uv run python - <<'EOF'
+                  from sqlalchemy import text
+                  from travel_data_platform.database.session import engine
+
+                  with engine.begin() as conn:
+                      for schema in ("ingestion", "app"):
+                          conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
+                  print("schemas ready: ingestion, app")
+                  EOF
+
+            - name: Current revision (before)
+              run: uv run alembic current
+
+            - name: Upgrade to head
+              run: uv run alembic upgrade head
+
+            - name: Current revision (after)
+              run: uv run alembic current
