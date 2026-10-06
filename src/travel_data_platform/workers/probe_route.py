@@ -33,6 +33,7 @@ from travel_data_platform.providers.google_flights.fetchers.playwright_fetcher i
 )
 from travel_data_platform.providers.google_flights.fetchers.tfs_fetcher import (
     GoogleFlightsTfsFetcher,
+    TripType,
 )
 
 
@@ -82,7 +83,7 @@ def _probe_fast_flights_direct(args: argparse.Namespace) -> None:
                 to_airport=args.origin,
             )
         )
-    trip = "round-trip" if args.return_date else "one-way"
+    trip: TripType = "round-trip" if args.return_date else "one-way"
 
     try:
         result = get_flights(

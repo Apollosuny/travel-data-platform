@@ -1,3 +1,5 @@
+from datetime import date
+
 from travel_data_platform.database.session import SessionLocal
 from travel_data_platform.domain.flight import FlightQuery
 from travel_data_platform.repositories.fetch_run_repository import FetchRunRepository
@@ -11,8 +13,8 @@ def main() -> None:
         query = FlightQuery(
             origin="HAN",
             destination="BKK",
-            departure_date="2026-04-20",
-            return_date="2026-04-25",
+            departure_date=date(2026, 4, 20),
+            return_date=date(2026, 4, 25),
             adults=1,
         )
 
