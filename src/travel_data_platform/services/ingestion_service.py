@@ -82,9 +82,7 @@ class IngestionService:
                 offers=offers,
             )
 
-            alert_count = self._create_alert_events(
-                db=db, fetch_run_id=fetch_run.id, query=query
-            )
+            alert_count = self._create_alert_events(db=db, fetch_run_id=fetch_run.id, query=query)
 
             fetch_run_repo.mark_success(
                 fetch_run=fetch_run,
@@ -96,9 +94,7 @@ class IngestionService:
             return IngestionResult(
                 fetch_run_id=str(fetch_run.id),
                 source=self.source,
-                fetched_at=(
-                    fetch_run.created_at.isoformat() if fetch_run.created_at else ""
-                ),
+                fetched_at=(fetch_run.created_at.isoformat() if fetch_run.created_at else ""),
                 query=query,
                 raw_offer_count=len(raw_offers),
                 normalized_offer_count=len(offers),
@@ -113,9 +109,7 @@ class IngestionService:
             try:
                 if fetch_run is not None:
                     fetch_run_repo = FetchRunRepository(db)
-                    fetch_run_repo.mark_failed(
-                        fetch_run=fetch_run, error_message=str(exc)
-                    )
+                    fetch_run_repo.mark_failed(fetch_run=fetch_run, error_message=str(exc))
                     db.commit()
             except Exception:
                 db.rollback()

@@ -72,7 +72,6 @@ class AlertRuleEvaluator:
             baseline_price=min_price_7d,
             target_price=None,
             message=(
-                f"Current price {current_price} {currency} "
-                "is the lowest price in the last 7 days."
+                f"Current price {current_price} {currency} is the lowest price in the last 7 days."
             ),
         )

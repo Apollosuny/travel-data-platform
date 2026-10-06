@@ -14,9 +14,7 @@ class FetchRunEnvelope(BaseModel):
     offers: list[dict]
 
     @classmethod
-    def create(
-        cls, source: str, query: FlightQuery, offers: list[dict]
-    ) -> "FetchRunEnvelope":
+    def create(cls, source: str, query: FlightQuery, offers: list[dict]) -> "FetchRunEnvelope":
         return cls(
             fetch_run_id=str(uuid4()),
             source=source,

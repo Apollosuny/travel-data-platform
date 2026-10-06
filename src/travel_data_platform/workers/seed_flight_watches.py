@@ -51,30 +51,33 @@ def main() -> None:
     try:
         desired = _build_watches()
         desired_keys = {
-            (w.origin, w.destination, w.departure_date, w.return_date, w.adults)
-            for w in desired
+            (w.origin, w.destination, w.departure_date, w.return_date, w.adults) for w in desired
         }
 
         # Cleanup: delete any existing watches on the same route that are not
         # in the new desired set. flight_alert_events has ON DELETE CASCADE,
         # so historical alerts for stale watches are removed with them.
-        stale = db.execute(
-            select(FlightWatch).where(
-                and_(
-                    FlightWatch.origin == ORIGIN,
-                    FlightWatch.destination == DESTINATION,
-                    not_(
-                        tuple_(
-                            FlightWatch.origin,
-                            FlightWatch.destination,
-                            FlightWatch.departure_date,
-                            FlightWatch.return_date,
-                            FlightWatch.adults,
-                        ).in_(list(desired_keys))
-                    ),
+        stale = (
+            db.execute(
+                select(FlightWatch).where(
+                    and_(
+                        FlightWatch.origin == ORIGIN,
+                        FlightWatch.destination == DESTINATION,
+                        not_(
+                            tuple_(
+                                FlightWatch.origin,
+                                FlightWatch.destination,
+                                FlightWatch.departure_date,
+                                FlightWatch.return_date,
+                                FlightWatch.adults,
+                            ).in_(list(desired_keys))
+                        ),
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         deleted = len(stale)
         for row in stale:

@@ -1,5 +1,6 @@
 class ProviderError(Exception):
-  """Base error for provider-related failures."""
+    """Base error for provider-related failures."""
+
 
 class ProviderFetchError(ProviderError):
     """Raised when fetching raw provider data fails."""

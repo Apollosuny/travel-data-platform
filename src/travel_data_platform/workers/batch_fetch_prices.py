@@ -29,9 +29,7 @@ async def main() -> None:
     service = BatchIngestionService(concurrency=1)
     summary = await service.ingest_watches(watches)
 
-    successful_watch_ids = {
-        result.watch_id for result in summary.results if result.success
-    }
+    successful_watch_ids = {result.watch_id for result in summary.results if result.success}
 
     if successful_watch_ids:
         db = SessionLocal()

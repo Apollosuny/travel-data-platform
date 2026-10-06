@@ -16,17 +16,23 @@ def test_parse_price_from_vietnamese_dong_label():
 def test_parse_nonstop():
     fetcher = GoogleFlightsBrowserFetcher()
 
-    assert fetcher._parse_stops(
-        "From 5986000 Vietnamese dong round trip total. Nonstop flight with Vietnam Airlines."
-    ) == 0
+    assert (
+        fetcher._parse_stops(
+            "From 5986000 Vietnamese dong round trip total. Nonstop flight with Vietnam Airlines."
+        )
+        == 0
+    )
 
 
 def test_parse_one_stop():
     fetcher = GoogleFlightsBrowserFetcher()
 
-    assert fetcher._parse_stops(
-        "From 8170000 Vietnamese dong round trip total. 1 stop flight with Vietnam Airlines."
-    ) == 1
+    assert (
+        fetcher._parse_stops(
+            "From 8170000 Vietnamese dong round trip total. 1 stop flight with Vietnam Airlines."
+        )
+        == 1
+    )
 
 
 def test_parse_time_range():
