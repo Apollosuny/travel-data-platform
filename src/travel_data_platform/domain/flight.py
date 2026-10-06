@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, time
 
 from pydantic import BaseModel
 
@@ -15,4 +15,5 @@ class FlightOffer(BaseModel):
   currency: str
   airline: str | None = None
   stops: int | None = None
-  
+  departure_time_local: time | None = None
+  arrival_time_local: time | None = None

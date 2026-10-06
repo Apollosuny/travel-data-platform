@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy.orm import Session
 
 from travel_data_platform.database.models.fetch_run import FetchRun
@@ -8,6 +10,7 @@ from travel_data_platform.providers.google_flights.client import GoogleFlightsPr
 from travel_data_platform.providers.google_flights.debug.artifacts import (
     write_debug_json,
 )
+from travel_data_platform.providers.google_flights.parser import parse_offers
 from travel_data_platform.repositories.fetch_run_repository import FetchRunRepository
 from travel_data_platform.repositories.flight_alert_event_repository import (
     FlightAlertEventRepository,
@@ -31,6 +34,7 @@ class IngestionService:
     def __init__(self, provider: GoogleFlightsProvider) -> None:
         self.provider = provider or GoogleFlightsProvider()
         self.source = "google_flights"
+        self.logger = logging.getLogger(__name__)
 
     async def ingest_google_flights(self, query: FlightQuery) -> IngestionResult:
         db: Session = SessionLocal()
@@ -57,7 +61,10 @@ class IngestionService:
             )
             db.commit()
 
-            offers = await self.provider.search(query)
+            # Parse the already-fetched payload instead of calling provider.search(),
+            # which would hit Google Flights a second time and could return a
+            # different result set than the raw offers persisted above.
+            offers = parse_offers(raw_offers)
             warnings = self._build_warnings(
                 raw_offers=raw_offers,
                 normalized_count=len(offers),
@@ -166,9 +173,29 @@ class IngestionService:
         alert_repo = FlightAlertEventRepository(db)
         evaluator = AlertRuleEvaluator()
 
-        cheapest_offer = monitoring_repo.get_cheapest_offer_for_fetch_run(fetch_run_id)
+        cheapest_offer = monitoring_repo.get_cheapest_offer_for_fetch_run(fetch_run_id, watch)
         if cheapest_offer is None:
+            self.logger.warning(
+                "watch_no_matching_offer watch_id=%s fetch_run_id=%s "
+                "departure_time_from=%s departure_time_to=%s max_stops=%s",
+                watch.id,
+                fetch_run_id,
+                watch.departure_time_from,
+                watch.departure_time_to,
+                watch.max_stops,
+            )
             return 0
+
+        self.logger.info(
+            "watch_cheapest_offer watch_id=%s price=%s currency=%s airline=%s "
+            "departure_time=%s stops=%s",
+            watch.id,
+            cheapest_offer.price,
+            cheapest_offer.currency,
+            cheapest_offer.airline,
+            cheapest_offer.departure_time_local,
+            cheapest_offer.stops,
+        )
 
         min_price_7d = monitoring_repo.get_min_price_7d_for_watch(watch)
 
