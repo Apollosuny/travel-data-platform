@@ -4,16 +4,17 @@ from pydantic import BaseModel
 
 
 class FlightQuery(BaseModel):
-  origin: str
-  destination: str
-  departure_date: date
-  return_date: date | None = None
-  adults: int = 1
+    origin: str
+    destination: str
+    departure_date: date
+    return_date: date | None = None
+    adults: int = 1
+
 
 class FlightOffer(BaseModel):
-  price: int
-  currency: str
-  airline: str | None = None
-  stops: int | None = None
-  departure_time_local: time | None = None
-  arrival_time_local: time | None = None
+    price: int
+    currency: str
+    airline: str | None = None
+    stops: int | None = None
+    departure_time_local: time | None = None
+    arrival_time_local: time | None = None

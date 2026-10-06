@@ -8,6 +8,7 @@ from travel_data_platform.providers.google_flights.fetchers.browser_fetcher impo
 )
 
 
+@pytest.mark.live
 @pytest.mark.asyncio
 async def test_google_browser_fetcher_live():
     fetcher = GoogleFlightsBrowserFetcher()

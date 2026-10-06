@@ -53,9 +53,7 @@ def test_parse_price_returns_none_for_empty_or_no_digits():
 def test_normalize_flight_maps_canonical_fields():
     fetcher = GoogleFlightsTfsFetcher()
 
-    offer = fetcher._normalize_flight(
-        _flight(price="5,986,000 ₫", stops=1, name="VietJet Air")
-    )
+    offer = fetcher._normalize_flight(_flight(price="5,986,000 ₫", stops=1, name="VietJet Air"))
 
     assert offer is not None
     assert offer["price"] == 5986000
@@ -156,10 +154,13 @@ async def test_fetch_raw_wraps_lib_errors_in_provider_fetch_error():
         departure_date=date(2026, 8, 7),
     )
 
-    with patch(
-        "travel_data_platform.providers.google_flights.fetchers.tfs_fetcher.get_flights",
-        side_effect=boom,
-    ), pytest.raises(ProviderFetchError):
+    with (
+        patch(
+            "travel_data_platform.providers.google_flights.fetchers.tfs_fetcher.get_flights",
+            side_effect=boom,
+        ),
+        pytest.raises(ProviderFetchError),
+    ):
         await fetcher.fetch_raw(query)
 
 

@@ -252,24 +252,24 @@ class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
         return offers
 
     def _dedupe_offers(self, offers: list[dict]) -> list[dict]:
-      deduped: list[dict] = []
-      seen: set[tuple] = set()
+        deduped: list[dict] = []
+        seen: set[tuple] = set()
 
-      for offer in offers:
-          key = (
-              offer.get("price"),
-              offer.get("currency"),
-              offer.get("airline"),
-              offer.get("stops"),
-              offer.get("card_aria_label"),
-          )
-          if key in seen:
-              continue
+        for offer in offers:
+            key = (
+                offer.get("price"),
+                offer.get("currency"),
+                offer.get("airline"),
+                offer.get("stops"),
+                offer.get("card_aria_label"),
+            )
+            if key in seen:
+                continue
 
-          seen.add(key)
-          deduped.append(offer)
+            seen.add(key)
+            deduped.append(offer)
 
-      return deduped
+        return deduped
 
     async def _extract_offer_from_card(self, card: Locator, source_url: str) -> dict | None:
         aria_label = await self._safe_get_attr(card.locator(".JMc5Xc").first, "aria-label")
@@ -374,13 +374,13 @@ class GoogleFlightsBrowserFetcher(GoogleFlightsRawFetcher):
         departure = departure_match.group(1) if departure_match else None
         arrival = arrival_match.group(1) if arrival_match else None
         return departure, arrival
-    
-    def _parse_duration_from_aria_label(self, aria_label: str) -> str | None:
-      if not aria_label:
-          return None
 
-      match = re.search(r"Total duration ([^.]+)", aria_label)
-      return match.group(1).strip() if match else None
+    def _parse_duration_from_aria_label(self, aria_label: str) -> str | None:
+        if not aria_label:
+            return None
+
+        match = re.search(r"Total duration ([^.]+)", aria_label)
+        return match.group(1).strip() if match else None
 
     def _parse_airline_from_aria_label(self, aria_label: str) -> str | None:
         if not aria_label:
