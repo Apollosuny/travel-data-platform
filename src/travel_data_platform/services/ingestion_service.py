@@ -8,6 +8,7 @@ from travel_data_platform.providers.google_flights.client import GoogleFlightsPr
 from travel_data_platform.providers.google_flights.debug.artifacts import (
     write_debug_json,
 )
+from travel_data_platform.providers.google_flights.parser import parse_offers
 from travel_data_platform.repositories.fetch_run_repository import FetchRunRepository
 from travel_data_platform.repositories.flight_alert_event_repository import (
     FlightAlertEventRepository,
@@ -57,7 +58,10 @@ class IngestionService:
             )
             db.commit()
 
-            offers = await self.provider.search(query)
+            # Parse the already-fetched payload instead of calling provider.search(),
+            # which would hit Google Flights a second time and could return a
+            # different result set than the raw offers persisted above.
+            offers = parse_offers(raw_offers)
             warnings = self._build_warnings(
                 raw_offers=raw_offers,
                 normalized_count=len(offers),
