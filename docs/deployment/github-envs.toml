@@ -1,0 +1,31 @@
+# GitHub Environment setup — single source of truth for workflow secrets and variables.
+#
+# Every key here must be read by a workflow under .github/workflows/ via
+# `secrets.<NAME>` or `vars.<NAME>` in a job that declares the matching `environment:`.
+#
+# Per-key options:
+#   description  shown in the generated env file and in prompts
+#   optional     may be left empty; it is skipped without a warning
+#   generate     (secrets only) auto-generate a random base64 value when empty
+#   pattern      regex the value must fully match before anything is pushed
+#
+# Usage:
+#   make github-env-init STAGE=prod   # create docs/deployment/.env.github.prod
+#   make github-env-push STAGE=prod   # push values to the GitHub Environment
+
+[environments.prod]
+# Only this branch may run jobs in the environment (deployment branch policy).
+branch = "main"
+
+[secrets.DATABASE_URL]
+description = "Neon DIRECT (non-pooler) URL using the psycopg driver: postgresql+psycopg://user:pass@ep-xxx.<region>.aws.neon.tech/neondb?sslmode=require"
+pattern = 'postgresql\+psycopg://\S+'
+
+[variables.LOG_LEVEL]
+description = "Default worker log level (DEBUG, INFO, WARNING, ERROR); a manual run input overrides it"
+optional = true
+pattern = "DEBUG|INFO|WARNING|ERROR"
+
+[variables.APP_ENV]
+description = "Runtime environment name exposed to the worker; defaults to production when unset"
+optional = true

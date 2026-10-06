@@ -22,11 +22,14 @@ jobs:
     fetch:
         runs-on: ubuntu-latest
         timeout-minutes: 15
+        # Secrets/variables come from the `prod` GitHub Environment, managed by
+        # `make github-env-push STAGE=prod` (see docs/deployment/setup.md).
+        environment: prod
 
         env:
             DATABASE_URL: ${{ secrets.DATABASE_URL }}
-            APP_ENV: production
-            LOG_LEVEL: ${{ inputs.log_level || 'INFO' }}
+            APP_ENV: ${{ vars.APP_ENV || 'production' }}
+            LOG_LEVEL: ${{ inputs.log_level || vars.LOG_LEVEL || 'INFO' }}
             PYTHONUNBUFFERED: "1"
 
         steps:
