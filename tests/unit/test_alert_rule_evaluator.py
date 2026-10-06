@@ -21,7 +21,7 @@ def test_evaluate_new_low_7d():
     evaluator = AlertRuleEvaluator()
 
     candidates = evaluator.evaluate(
-        current_price=5800000,
+        current_price=5700000,
         currency="VND",
         target_price=None,
         min_price_7d=5800000,
@@ -32,6 +32,19 @@ def test_evaluate_new_low_7d():
     assert candidates[0].baseline_price == 5800000
 
 
+def test_evaluate_new_low_7d_ignores_price_equal_to_previous_low():
+    evaluator = AlertRuleEvaluator()
+
+    candidates = evaluator.evaluate(
+        current_price=5800000,
+        currency="VND",
+        target_price=None,
+        min_price_7d=5800000,
+    )
+
+    assert candidates == []
+
+
 def test_evaluate_both_rules():
     evaluator = AlertRuleEvaluator()
 
@@ -39,7 +52,7 @@ def test_evaluate_both_rules():
         current_price=5700000,
         currency="VND",
         target_price=6000000,
-        min_price_7d=5700000,
+        min_price_7d=5800000,
     )
 
     assert len(candidates) == 2

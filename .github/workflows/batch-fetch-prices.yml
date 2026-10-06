@@ -1,10 +1,12 @@
 name: batch-fetch-prices
 
 on:
-    # Schedule disabled for now — uncomment when ready to run automatically.
-    # GitHub Actions cron is best-effort: expect 5–15 min delay under load.
-    # schedule:
-    #     - cron: "0 */6 * * *"  # every 6 hours, aligned with check_frequency_minutes=360
+    # Hourly tick; each watch's check_frequency_minutes decides whether it is due, so
+    # GitHub's 5–15 min cron jitter cannot push a 6-hour watch out to 12 hours.
+    # The cron day/month range is coarse (UTC, and it recurs every year); the `gate`
+    # job enforces the exact end time below. Manual runs are never gated.
+    schedule:
+        - cron: "0 * 6-11 10 *"
     workflow_dispatch:
         inputs:
             log_level:
@@ -18,8 +20,38 @@ concurrency:
     group: batch-fetch-prices
     cancel-in-progress: false
 
+env:
+    # Scheduled runs stop after this instant: 2026-10-11 23:59:59 Asia/Ho_Chi_Minh.
+    SCHEDULE_END_UTC: "2026-10-11T16:59:59Z"
+
 jobs:
+    gate:
+        runs-on: ubuntu-latest
+        timeout-minutes: 2
+        outputs:
+            run: ${{ steps.check.outputs.run }}
+        steps:
+            - name: Check schedule window
+              id: check
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+              run: |
+                  if [ "$EVENT_NAME" != "schedule" ]; then
+                      echo "run=true" >> "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+                  now=$(date -u +%s)
+                  end=$(date -u -d "$SCHEDULE_END_UTC" +%s)
+                  if [ "$now" -le "$end" ]; then
+                      echo "run=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "::notice::Schedule window ended at $SCHEDULE_END_UTC; skipping batch."
+                      echo "run=false" >> "$GITHUB_OUTPUT"
+                  fi
+
     fetch:
+        needs: gate
+        if: needs.gate.outputs.run == 'true'
         runs-on: ubuntu-latest
         timeout-minutes: 15
         # Secrets/variables come from the `prod` GitHub Environment, managed by

@@ -4,7 +4,7 @@ The workflows read their configuration from the **`prod` GitHub Environment**:
 
 | Workflow | Trigger | Uses |
 |---|---|---|
-| `batch-fetch-prices.yml` | manual (schedule is commented out) | `secrets.DATABASE_URL`, `vars.LOG_LEVEL`, `vars.APP_ENV` |
+| `batch-fetch-prices.yml` | hourly until `SCHEDULE_END_UTC`, plus manual | `secrets.DATABASE_URL`, `vars.LOG_LEVEL`, `vars.APP_ENV` |
 | `db-migrate.yml` | manual only | `secrets.DATABASE_URL`, `vars.APP_ENV` |
 
 The keys are declared once in [`github-envs.toml`](./github-envs.toml). Their values live in
@@ -61,4 +61,8 @@ VALUES
 
 1. Run **Actions → batch-fetch-prices → Run workflow** with `log_level=DEBUG`.
 2. In the log, check that `watch_cheapest_offer` shows `currency=VND` and the expected departure time.
-3. To run automatically, uncomment the `schedule` block in `batch-fetch-prices.yml`.
+3. Scheduled runs fire every hour, and each watch's `check_frequency_minutes` decides
+   whether it is due. They stop after `SCHEDULE_END_UTC` in `batch-fetch-prices.yml`;
+   a `gate` job enforces it because the cron date range recurs every year. To extend or
+   end the window, edit `SCHEDULE_END_UTC` and the cron day/month range together.
+   Manual runs ignore the window.

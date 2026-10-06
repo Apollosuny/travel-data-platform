@@ -62,7 +62,10 @@ class AlertRuleEvaluator:
         if min_price_7d is None:
             return None
 
-        if current_price > min_price_7d:
+        # min_price_7d covers earlier successful runs only (the current run is still
+        # RUNNING when alerts are evaluated). Requiring a strictly lower price keeps a
+        # flat price from re-alerting on every scheduled run.
+        if current_price >= min_price_7d:
             return None
 
         return AlertCandidate(
@@ -72,6 +75,7 @@ class AlertRuleEvaluator:
             baseline_price=min_price_7d,
             target_price=None,
             message=(
-                f"Current price {current_price} {currency} is the lowest price in the last 7 days."
+                f"Current price {current_price} {currency} is below the previous "
+                f"7-day low of {min_price_7d} {currency}."
             ),
         )
