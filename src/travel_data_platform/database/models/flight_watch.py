@@ -1,7 +1,7 @@
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 
-from sqlalchemy import Boolean, Date, DateTime, Integer, SmallInteger, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Integer, SmallInteger, Text, Time, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -23,6 +23,12 @@ class FlightWatch(Base):
     adults: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
 
     target_price: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Optional offer filters applied before picking the cheapest offer for alerting.
+    # Departure window bounds are inclusive local times at the origin airport.
+    departure_time_from: Mapped[time | None] = mapped_column(Time, nullable=True)
+    departure_time_to: Mapped[time | None] = mapped_column(Time, nullable=True)
+    max_stops: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 

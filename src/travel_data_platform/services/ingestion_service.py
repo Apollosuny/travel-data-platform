@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy.orm import Session
 
 from travel_data_platform.database.models.fetch_run import FetchRun
@@ -32,6 +34,7 @@ class IngestionService:
     def __init__(self, provider: GoogleFlightsProvider) -> None:
         self.provider = provider or GoogleFlightsProvider()
         self.source = "google_flights"
+        self.logger = logging.getLogger(__name__)
 
     async def ingest_google_flights(self, query: FlightQuery) -> IngestionResult:
         db: Session = SessionLocal()
@@ -170,9 +173,29 @@ class IngestionService:
         alert_repo = FlightAlertEventRepository(db)
         evaluator = AlertRuleEvaluator()
 
-        cheapest_offer = monitoring_repo.get_cheapest_offer_for_fetch_run(fetch_run_id)
+        cheapest_offer = monitoring_repo.get_cheapest_offer_for_fetch_run(fetch_run_id, watch)
         if cheapest_offer is None:
+            self.logger.warning(
+                "watch_no_matching_offer watch_id=%s fetch_run_id=%s "
+                "departure_time_from=%s departure_time_to=%s max_stops=%s",
+                watch.id,
+                fetch_run_id,
+                watch.departure_time_from,
+                watch.departure_time_to,
+                watch.max_stops,
+            )
             return 0
+
+        self.logger.info(
+            "watch_cheapest_offer watch_id=%s price=%s currency=%s airline=%s "
+            "departure_time=%s stops=%s",
+            watch.id,
+            cheapest_offer.price,
+            cheapest_offer.currency,
+            cheapest_offer.airline,
+            cheapest_offer.departure_time_local,
+            cheapest_offer.stops,
+        )
 
         min_price_7d = monitoring_repo.get_min_price_7d_for_watch(watch)
 
