@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import re
+from typing import Literal
 
 from fast_flights import FlightData, Passengers, get_flights
 from fast_flights.schema import Flight, Result
@@ -25,6 +26,12 @@ _CURRENCY_BY_SYMBOL: list[tuple[str, str]] = [
 ]
 
 
+# Mirrors the Literal parameter types of fast_flights.get_flights.
+SeatClass = Literal["economy", "premium-economy", "business", "first"]
+FetchMode = Literal["common", "fallback", "force-fallback", "local"]
+TripType = Literal["round-trip", "one-way", "multi-city"]
+
+
 class GoogleFlightsTfsFetcher(GoogleFlightsRawFetcher):
     """Fetches Google Flights offers via the `tfs` deeplink approach.
 
@@ -34,8 +41,8 @@ class GoogleFlightsTfsFetcher(GoogleFlightsRawFetcher):
 
     def __init__(
         self,
-        seat: str = "economy",
-        fetch_mode: str = "common",
+        seat: SeatClass = "economy",
+        fetch_mode: FetchMode = "common",
         max_offers: int | None = None,
     ) -> None:
         self._seat = seat
@@ -110,7 +117,7 @@ class GoogleFlightsTfsFetcher(GoogleFlightsRawFetcher):
                 )
             )
 
-        trip = "round-trip" if query.return_date is not None else "one-way"
+        trip: TripType = "round-trip" if query.return_date is not None else "one-way"
 
         return get_flights(
             flight_data=flight_data,

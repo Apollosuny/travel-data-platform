@@ -51,6 +51,7 @@ addopts = "-q"
 
 [tool.mypy]
 python_version = "3.12"
+plugins = ["pydantic.mypy"]
 mypy_path = "src"
 warn_unused_configs = true
 warn_redundant_casts = true
